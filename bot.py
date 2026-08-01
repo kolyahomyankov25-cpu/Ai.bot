@@ -3,6 +3,7 @@ import requests
 from flask import Flask, request
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+import sys
 
 app = Flask(__name__)
 
@@ -19,18 +20,17 @@ SYSTEM_PROMPT = """Ты система Role.Play созданная в пуст�
 
 HF_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
 
-def ask_hf(prompt):
-    full = f"{SYSTEM_PROMPT}\nПользователь: {prompt}\nСистема:"
-    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-    data = {"inputs": full, "parameters": {"max_new_tokens": 400, "temperature": 0.8}}
-    try:
-        resp = requests.post(HF_URL, headers=headers, json=data, timeout=30)
-        if resp.status_code == 200:
-            raw = resp.json()[0].get('generated_text', '')
-            return raw.split("Система:")[-1].strip()
-        return f"Ошибка API: {resp.status_code}"
-    except Exception as e:
-        return f"Ошибка: {str(e)}"
+try:
+    resp = requests.post(HF_URL, headers=headers, json=data, timeout=30)
+    print("HF status:", resp.status_code)
+    print("HF response:", resp.text[:300])
+    if resp.status_code == 200:
+        raw = resp.json()[0].get('generated_text', '')
+        return raw.split("Система:")[-1].strip()
+    return f"Ошибка API: {resp.status_code}"
+except Exception as e:
+    print(f"Исключение: {e}")
+    return f"Ошибка: {str(e)}"
 
 async def start(update: Update, context: CallbackContext):
     await update.message.reply_text("Привет! Я — твой ИИ. Пиши /guide или /new.")

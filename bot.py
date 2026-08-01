@@ -1,9 +1,7 @@
-import os
-import sys
 import requests
 from flask import Flask, request
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 app = Flask(__name__)
 
@@ -24,25 +22,23 @@ def ask_hf(prompt):
     data = {"inputs": full, "parameters": {"max_new_tokens": 400, "temperature": 0.8}}
     try:
         resp = requests.post(HF_URL, headers=headers, json=data, timeout=30)
-        print("HF status:", resp.status_code)
         if resp.status_code == 200:
             raw = resp.json()[0].get('generated_text', '')
             return raw.split("Система:")[-1].strip()
         return f"Ошибка API: {resp.status_code}"
     except Exception as e:
-        print("Ошибка:", e)
         return f"Ошибка: {str(e)}"
 
-async def start(update: Update, context: CallbackContext):
+async def start(update, context):
     await update.message.reply_text("Привет! Я — твой ИИ. Пиши /guide или /new.")
 
-async def guide(update: Update, context: CallbackContext):
+async def guide(update, context):
     await update.message.reply_text("Ты в симуляции. Описывай внешность, локацию, эмоции. /new — создать персонажа.")
 
-async def new_cmd(update: Update, context: CallbackContext):
+async def new_cmd(update, context):
     await update.message.reply_text("Опиши персонажа: внешность, характер, историю.")
 
-async def handle(update: Update, context: CallbackContext):
+async def handle(update, context):
     text = update.message.text
     if text.startswith("/"):
         return
